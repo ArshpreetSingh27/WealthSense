@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Paper Portfolio Schema",
+  "type": "object",
+  "properties": {
+    "capital": { "type": "number" },
+    "cash": { "type": "number" },
+    "positions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "qty": { "type": "integer" },
+          "entry_price": { "type": "number" },
+          "entry_date": { "type": "string", "format": "date" },
+          "side": { "type": "string", "enum": ["LONG", "SHORT"] },
+          "signal_reason": { "type": "string" },
+          "stop_loss": { "type": "number" },
+          "take_profit": { "type": "number" },
+          "holding_days": { "type": "integer" }
+        },
+        "required": ["qty", "entry_price", "entry_date", "side"]
+      }
+    },
+    "pending_signals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "equity_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string" },
+          "equity": { "type": "number" },
+          "cash": { "type": "number" }
+        }
+      }
+    },
+    "trades": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "required": ["capital", "cash", "positions", "equity_history"]
+}
