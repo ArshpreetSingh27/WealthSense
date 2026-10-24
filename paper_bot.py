@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 import paper_accounts
 from data.scripts.load_and_plot import load_stock
+from realtime import get_live_price
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,10 +35,17 @@ def _recommendations():
 
 
 def _quote(ticker, market_date):
-    df = load_stock(os.path.join(RAW_DIR, f"{ticker}.NS.csv"))
-    if df.empty or df["Date"].iloc[-1].date().isoformat() != market_date:
-        raise ValueError(f"Current market data is missing for {ticker}.")
-    price = float(df["Close"].iloc[-1])
+    path = os.path.join(RAW_DIR, f"{ticker}.NS.csv")
+    if os.path.exists(path):
+        df = load_stock(path)
+        if df.empty or df["Date"].iloc[-1].date().isoformat() != market_date:
+            raise ValueError(f"Current market data is missing for {ticker}.")
+        price = float(df["Close"].iloc[-1])
+    else:
+        quote = get_live_price(ticker, period="10d")
+        if quote["dates"][-1] != market_date:
+            raise ValueError(f"Current market data is missing for {ticker}.")
+        price = float(quote["current_price"])
     if not math.isfinite(price) or price <= 0:
         raise ValueError(f"Invalid market price for {ticker}.")
     return price

@@ -21,7 +21,7 @@ Calculates real-time sentiment scores from Google News RSS headlines using VADER
 Tracks manually entered holdings with latest available prices and estimated P&L at `/portfolio`. It is separate from the paper account.
 
 **Per-user paper trading**
-The Paper Trading tab gives each user ₹10,00,000 in virtual starting cash. Manual paper buys and sells use the latest available NSE close and modeled 0.12% execution friction. A user can enable a daily long-only paper bot or run it manually. Virtual trades are stored per user in SQLite and are never sent to a broker.
+The Paper Trading tab gives each user ₹10,00,000 in virtual starting cash. Manual paper buys and sells use the latest available NSE close and modeled 0.12% execution friction. A user can enable a long-only paper bot or run it manually when current recommendations are available. Virtual trades are stored per user in local SQLite or a hosted Turso database and are never sent to a broker.
 
 **Paper trading limits**
 Virtual orders require available cash, cannot short stocks, and cap a single paper position at 20% of starting capital. Users can pause their paper bot.
@@ -41,7 +41,7 @@ A full suite of backtesting, feature engineering, walk-forward validation, and m
 
 Backend:
 - Python 3.10+, Flask
-- SQLite3
+- SQLite3 locally, Turso serverless SQLite on Vercel
 - yfinance for live stock prices and OHLCV history
 - feedparser for Google News RSS
 - vaderSentiment for NLP sentiment analysis
@@ -83,6 +83,21 @@ python start_site.py
 The launcher opens `http://127.0.0.1:5050/login` automatically. The HTML files in `templates/` must be rendered by Flask; opening them directly from File Explorer shows raw template tags and no styling. Set `APP_PORT` if port 5050 is already in use. You can also run `python app.py` and open the URL yourself.
 
 On first launch, Flask initializes the local SQLite database. New accounts have no admin rights. After registering an account, grant its admin role locally with `python database.py --promote-admin your@email.example`, then sign in again. Existing accounts are not promoted automatically.
+
+## Deploy on Vercel
+
+Vercel detects the root `app.py` and deploys it when you import this GitHub repository. Keep the preset on **Other** or **Flask** and leave Build Command and Output Directory blank. Each later push to `main` triggers a new deployment.
+
+The app needs durable storage before it can accept registrations or paper trades. Vercel's function filesystem is temporary, so the local `.db` file is never used there. Complete these one-time steps in the Vercel project:
+
+1. Import `flyingsaucer1/WealthSense` from GitHub and allow the initial deployment. It will show a setup message until the settings below exist.
+2. In the Vercel project, open **Storage / Marketplace** and connect a **Turso** database. The integration adds `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` to the project environment.
+3. In **Settings → Environment Variables**, add `FLASK_SECRET_KEY` as a random, persistent secret (at least 32 bytes). Set it for Production and Preview if both use the app. Keep Preview on a separate database if you want its accounts isolated.
+4. Redeploy the project so the function receives the new variables. The first request creates the tables. Register a new account on the deployed site; local accounts are not copied automatically.
+
+Manual paper orders can use recent NSE closing quotes from Yahoo Finance even though generated CSV files are not included in Git. Quotes can be unavailable when the upstream service is down. The research recommendations and opt-in bot require fresh output from the separate market pipeline; Vercel does not run the Windows Task Scheduler job or retrain models during a web request. Run the pipeline separately and publish its generated JSON before relying on those features. Vercel currently deploys the website and persistent manual paper trading; it does not schedule the research pipeline.
+
+To run the research pipeline locally, install `requirements-pipeline.txt`. Keep `TURSO_AUTH_TOKEN`, `FLASK_SECRET_KEY`, and local database files out of Git.
 
 ---
 

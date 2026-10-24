@@ -20,10 +20,7 @@ class PaperOrderError(ValueError):
 
 
 def _connect():
-    connection = sqlite3.connect(database.DB_FILE, timeout=10)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys=ON")
-    return connection
+    return database.connect(row_factory=sqlite3.Row)
 
 
 def _ensure_account(connection, email):

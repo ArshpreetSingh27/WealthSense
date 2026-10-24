@@ -8,11 +8,36 @@ DEFAULT_DB_FILE = os.path.join(BASE_DIR, "wealth_sense.db")
 LEGACY_DB_FILE = os.path.join(BASE_DIR, "master_predictor.db")
 DB_FILE = DEFAULT_DB_FILE
 
+
+def is_hosted():
+    return bool(os.environ.get("TURSO_DATABASE_URL"))
+
+
+def connect(row_factory=None):
+    """Use durable Turso storage on Vercel, local SQLite for development."""
+    if is_hosted():
+        import turso_serverless
+        token = os.environ.get("TURSO_AUTH_TOKEN")
+        if not token:
+            raise RuntimeError("TURSO_AUTH_TOKEN is required with TURSO_DATABASE_URL")
+        conn = turso_serverless.connect(os.environ["TURSO_DATABASE_URL"], auth_token=token)
+        if row_factory is not None:
+            conn.row_factory = turso_serverless.Row
+    else:
+        if os.environ.get("VERCEL"):
+            raise RuntimeError("Turso database is required on Vercel")
+        conn = sqlite3.connect(DB_FILE, timeout=10)
+        if row_factory is not None:
+            conn.row_factory = row_factory
+    conn.execute("PRAGMA foreign_keys=ON")
+    return conn
+
 def init_db():
-    if DB_FILE == DEFAULT_DB_FILE and not os.path.exists(DB_FILE) and os.path.exists(LEGACY_DB_FILE):
+    if (not is_hosted() and DB_FILE == DEFAULT_DB_FILE
+            and not os.path.exists(DB_FILE) and os.path.exists(LEGACY_DB_FILE)):
         with sqlite3.connect(LEGACY_DB_FILE) as old_db, sqlite3.connect(DB_FILE) as new_db:
             old_db.backup(new_db)
-    conn = sqlite3.connect(DB_FILE)
+    conn = connect()
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -98,7 +123,7 @@ def init_db():
     conn.close()
 
 def create_user(email, password):
-    conn = sqlite3.connect(DB_FILE)
+    conn = connect()
     cursor = conn.cursor()
     email = email.lower().strip()
     try:
@@ -106,15 +131,15 @@ def create_user(email, password):
         cursor.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, hashed_pw))
         conn.commit()
         return True, "User created successfully."
-    except sqlite3.IntegrityError:
-        return False, "Email already exists."
     except Exception as e:
+        if isinstance(e, sqlite3.IntegrityError) or e.__class__.__name__ == "IntegrityError":
+            return False, "Email already exists."
         return False, str(e)
     finally:
         conn.close()
 
 def authenticate_user(email, password):
-    conn = sqlite3.connect(DB_FILE)
+    conn = connect()
     cursor = conn.cursor()
     email = email.lower().strip()
     cursor.execute("SELECT password FROM users WHERE email=?", (email,))
@@ -129,19 +154,19 @@ def authenticate_user(email, password):
 def user_exists(email):
     if not email:
         return False
-    with closing(sqlite3.connect(DB_FILE)) as conn:
+    with closing(connect()) as conn:
         row = conn.execute("SELECT 1 FROM users WHERE email=?", (email.lower().strip(),)).fetchone()
     return row is not None
 
 def user_is_admin(email):
     if not email:
         return False
-    with closing(sqlite3.connect(DB_FILE)) as conn:
+    with closing(connect()) as conn:
         row = conn.execute("SELECT is_admin FROM users WHERE email=?", (email.lower().strip(),)).fetchone()
     return bool(row and row[0])
 
 def set_user_admin(email, enabled=True):
-    with closing(sqlite3.connect(DB_FILE)) as conn:
+    with closing(connect()) as conn:
         with conn:
             cursor = conn.execute(
                 "UPDATE users SET is_admin=? WHERE email=?",
@@ -154,7 +179,7 @@ def set_user_admin(email, enabled=True):
 # ================================
 
 def add_to_portfolio(email, ticker, quantity=1, purchase_price=0):
-    conn = sqlite3.connect(DB_FILE)
+    conn = connect()
     cursor = conn.cursor()
     email = email.lower().strip()
     try:
@@ -173,7 +198,7 @@ def add_to_portfolio(email, ticker, quantity=1, purchase_price=0):
         conn.close()
 
 def remove_from_portfolio(email, ticker):
-    conn = sqlite3.connect(DB_FILE)
+    conn = connect()
     cursor = conn.cursor()
     email = email.lower().strip()
     try:
@@ -186,7 +211,7 @@ def remove_from_portfolio(email, ticker):
         conn.close()
 
 def get_user_portfolio(email):
-    conn = sqlite3.connect(DB_FILE)
+    conn = connect()
     cursor = conn.cursor()
     email = email.lower().strip()
     cursor.execute("SELECT ticker, quantity, purchase_price FROM portfolio WHERE user_email=?", (email,))
@@ -203,7 +228,7 @@ def get_user_portfolio(email):
     return portfolio
 
 def get_all_users_summary():
-    conn = sqlite3.connect(DB_FILE)
+    conn = connect()
     cursor = conn.cursor()
     # Join users and portfolio to get counts
     cursor.execute("""
@@ -227,7 +252,7 @@ def get_all_users_summary():
     return summary
 
 def delete_user_account(email):
-    conn = sqlite3.connect(DB_FILE)
+    conn = connect()
     cursor = conn.cursor()
     email = email.lower().strip()
     try:

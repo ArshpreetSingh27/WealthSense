@@ -22,15 +22,21 @@ from data.scripts.load_and_plot import load_stock
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
+HOSTING_SETUP_MISSING = bool(os.environ.get("VERCEL")) and not all(
+    os.environ.get(name) for name in ("FLASK_SECRET_KEY", "TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN")
+)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.environ.get("APP_HTTPS") == "1",
+    SESSION_COOKIE_SECURE=os.environ.get("APP_HTTPS") == "1" or bool(os.environ.get("VERCEL")),
 )
 print("Initializing configuration...")
 
 @app.before_request
 def require_login_for_api():
+    if HOSTING_SETUP_MISSING:
+        return ("WEALTH sense deployment needs FLASK_SECRET_KEY and a connected Turso database "
+                "(TURSO_DATABASE_URL and TURSO_AUTH_TOKEN) in Vercel project settings.", 503)
     if "user" in session and not user_exists(session["user"]):
         session.clear()
         if request.path.startswith("/api/"):
@@ -64,8 +70,9 @@ def data_is_stale(value, max_age_days=7):
     return age < 0 or age > max_age_days
 
 # Ensure DB is initialized
-init_db()
-print("Database initialized.")
+if not HOSTING_SETUP_MISSING:
+    init_db()
+    print("Database initialized.")
 
 POLYGON_API_KEY = os.environ.get("POLYGON_API_KEY")
 PAPER_TICKERS = {ticker.removesuffix(".NS") for ticker in TICKERS}
@@ -73,11 +80,16 @@ PAPER_TICKERS = {ticker.removesuffix(".NS") for ticker in TICKERS}
 
 def paper_quote(ticker):
     path = os.path.join(BASE_DIR, "data", "raw", f"{ticker}.NS.csv")
-    history = load_stock(path)
-    if history.empty:
-        raise ValueError("No NSE closing price is available for this paper order.")
-    price = float(history["Close"].iloc[-1])
-    market_day = history["Date"].iloc[-1].date()
+    if os.path.exists(path):
+        history = load_stock(path)
+        if history.empty:
+            raise ValueError("No NSE closing price is available for this paper order.")
+        price = float(history["Close"].iloc[-1])
+        market_day = history["Date"].iloc[-1].date()
+    else:
+        quote = get_live_price(ticker, period="10d")
+        price = float(quote["current_price"])
+        market_day = date.fromisoformat(quote["dates"][-1])
     age = (datetime.now(ZoneInfo("Asia/Kolkata")).date() - market_day).days
     if not math.isfinite(price) or price <= 0 or not 0 <= age <= 7:
         raise ValueError("No recent NSE quote is available for this paper order.")
