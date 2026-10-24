@@ -1,0 +1,64 @@
+# Python Gitignore
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Database
+master_predictor.db
+wealth_sense.db
+*.db
+
+# Scratch & temp files
+scratch/
+*.png
+
+# Runtime-generated data files (not source code)
+data/trades_log.csv
+data/paper_portfolio.json
+
+# Virtual Environment
+venv/
+.venv/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Project Specific
+scratch/
+*.log
+.env
+
+# Raw & Processed Data (regeneratable via pipeline scripts)
+data/raw/
+data/raw_intraday/
+data/raw_benchmarks/
+data/reports/
+data/processed/*.csv
+
+# Python cache
+data/scripts/__pycache__/
+**/__pycache__/
+*.pyc

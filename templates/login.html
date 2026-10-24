@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEALTH sense | Portfolio Intelligence</title>
+    <!-- Google Fonts: Merriweather for that classic newspaper feel -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .toggle-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 15px;
+            font-family: 'Arial', sans-serif;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .toggle-link {
+            color: var(--text-primary);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .error-message {
+            color: var(--color-sell);
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .success-message {
+            color: var(--color-buy);
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="login-body">
+
+    <div class="login-container">
+        <div class="vintage-border">
+            <div class="login-card">
+
+                <div class="login-header">
+                    <h1 class="newspaper-title">WEALTH sense</h1>
+                    <div class="dateline">
+                        <span>VOL. I ... No. 1</span>
+                        <span id="todaysDate">TODAY'S DATE</span>
+                        <span>PRICE: CENTS</span>
+                    </div>
+                </div>
+
+                <div class="article-divider"></div>
+
+                <p class="login-lead" id="loginSubtitle">
+                    <em>The finest algorithmic analytics hand-delivered to your terminal. Enter your credentials to
+                        access today's intelligence.</em>
+                </p>
+
+                <p id="formFeedback" class="error-message"></p>
+
+                <!-- Authentication Form -->
+                <form id="authForm" class="login-form">
+                    <div class="input-group">
+                        <label for="email">Reader's Email</label>
+                        <input type="email" id="email" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="password">Passcode</label>
+                        <input type="password" id="password" required>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn-primary">Unlock Dashboard</button>
+                    <p class="toggle-text" id="toggleMode">Not a subscriber? <span class="toggle-link"
+                            onclick="toggleFormMode()">Subscribe Here</span></p>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    </div>
+
+    <script>
+        document.getElementById('todaysDate').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+
+        let isLoginMode = true;
+
+        function toggleFormMode() {
+            isLoginMode = !isLoginMode;
+            const subtitle = document.getElementById('loginSubtitle');
+            const submitBtn = document.getElementById('submitBtn');
+            const toggleModeText = document.getElementById('toggleMode');
+            const formFeedback = document.getElementById('formFeedback');
+
+            formFeedback.style.display = "none";
+
+            if (isLoginMode) {
+                subtitle.innerHTML = "<em>The finest algorithmic analytics hand-delivered to your terminal. Enter your credentials to access today's intelligence.</em>";
+                submitBtn.innerHTML = "Unlock Dashboard";
+                toggleModeText.innerHTML = 'Not a subscriber? <span class="toggle-link" onclick="toggleFormMode()">Subscribe Here</span>';
+            } else {
+                subtitle.innerHTML = "<em>Secure your daily delivery of market analytics. Obtain your subscription credentials below.</em>";
+                submitBtn.innerHTML = "Become a Subscriber";
+                toggleModeText.innerHTML = 'Already a subscriber? <span class="toggle-link" onclick="toggleFormMode()">Access Terminal</span>';
+            }
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const formFeedback = document.getElementById('formFeedback');
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Simple Email Regex Validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                formFeedback.innerText = "Please enter a valid reader's email address.";
+                formFeedback.className = "error-message";
+                formFeedback.style.display = "block";
+                return;
+            }
+
+            // Password Length Validation
+            if (password.length < 8) {
+                formFeedback.innerText = "Passcode must be at least 8 characters in length.";
+                formFeedback.className = "error-message";
+                formFeedback.style.display = "block";
+                return;
+            }
+
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = '<em>Processing...</em>';
+            btn.disabled = true;
+            formFeedback.style.display = "none";
+
+            const endpoint = isLoginMode ? '/api/login' : '/api/register';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (isLoginMode) {
+                        localStorage.setItem('wealthSenseAuth', 'true');
+                        window.location.href = '/';
+                    } else {
+                        formFeedback.innerText = "Subscription successful. Proceed to access terminal.";
+                        formFeedback.className = "success-message";
+                        formFeedback.style.display = "block";
+                        toggleFormMode(); // Switch back to login
+                        btn.innerHTML = document.getElementById('submitBtn').innerHTML; // Refresh text
+                        btn.disabled = false;
+                    }
+                } else {
+                    formFeedback.innerText = data.error || "An error occurred.";
+                    formFeedback.className = "error-message";
+                    formFeedback.style.display = "block";
+                    btn.innerHTML = originalBtnText;
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                formFeedback.innerText = "Network failure. Please try again.";
+                formFeedback.className = "error-message";
+                formFeedback.style.display = "block";
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

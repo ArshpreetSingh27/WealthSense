@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEALTH sense | Portfolio Intelligence</title>
+    <!-- Google Fonts: Merriweather and Playfair -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+</head>
+
+<body class="dashboard-body">
+
+    <!-- Header / Masthead -->
+    <header class="newspaper-header">
+        <div class="header-top">
+            <div class="dateline-section">
+                <span class="dateline-left" id="headerDate">Loading date...</span>
+                <span class="meta-divider">|</span>
+                <a href="/portfolio" class="premium-nav-link">PRIVATE PORTFOLIO</a>
+                <span class="meta-divider">|</span>
+                <a href="#" onclick="switchTab('validation'); return false;" class="premium-nav-link">PAPER TRADING</a>
+            </div>
+            <div class="nav-controls">
+                <button id="themeToggle" class="theme-btn" aria-label="Toggle Edition">
+                    <svg id="themeIcon" viewBox="0 0 24 24" fill="none" class="icon">
+                        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    <span class="theme-label" id="themeText">Evening Edition</span>
+                </button>
+                <div class="profile-dropdown-container">
+                    <div class="user-avatar" id="userAvatar">
+                        {{ session['user'][0]|upper if 'user' in session else 'R' }}
+                    </div>
+                    <div class="profile-dropdown-menu" id="profileDropdown">
+                        <div class="dropdown-header">
+                            <strong>{{ session['user'] if 'user' in session else 'Reader' }}</strong>
+                            <span style="font-size:10px; color:var(--text-secondary)">Premium Subscriber</span>
+                        </div>
+                        <div class="article-divider" style="margin: 8px 0;"></div>
+                        {% if session.get('is_admin') %}
+                        <a href="/admin" class="user-action" style="display:block; text-decoration:none; color:var(--text-primary); border-bottom:1px solid var(--border-light); margin-bottom:4px;">ADMIN PANEL</a>
+                        {% endif %}
+                        <div class="user-action" id="userLogout">Sign Out</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h1 class="newspaper-title">WEALTH sense</h1>
+
+        <div class="header-bottom">
+            <span>UNBIASED ALGORITHMIC ANALYSIS</span>
+            <div class="tabs-control">
+                <button class="tab-btn active" onclick="switchTab('recommendations')">DAILY SIGNALS</button>
+                <button class="tab-btn" onclick="switchTab('intraday')">INTRADAY SCALPS</button>
+                <button class="tab-btn" onclick="switchTab('trading-alpha')">TRADING ALPHA (HEDGE)</button>
+                <button class="tab-btn" onclick="switchTab('validation')">PAPER TRADING</button>
+                <button class="tab-btn" onclick="switchTab('risk-monitor')">RISK MONITOR</button>
+            </div>
+            <span>EST. 2026</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+
+        <!-- Main Dashboard Content (Toggled via Tabs) -->
+        <section id="recommendationsSection">
+            <!-- Summary Stats (Ticker Tape style) -->
+            <section class="ticker-tape">
+                <div class="tape-item">
+                    <span class="tape-label">TOTAL LISTINGS:</span>
+                    <strong id="stat-total">--</strong>
+                </div>
+                <div class="tape-item tape-buy">
+                    <span class="tape-label">BUY ALERTS:</span>
+                    <strong id="stat-buy">--</strong>
+                </div>
+                <div class="tape-item tape-sell">
+                    <span class="tape-label">SELL ALERTS:</span>
+                    <strong id="stat-sell">--</strong>
+                </div>
+                <div class="tape-item">
+                    <span class="tape-label">LAST UPDATED:</span>
+                    <strong id="stat-date">----/--/--</strong>
+                </div>
+            </section>
+
+            <!-- Market Pulse Section -->
+            <section class="market-pulse">
+                <div class="pulse-header">
+                    <div style="display: flex; flex-direction: column;">
+                        <h3 class="pulse-title">World Market Intelligence</h3>
+                        <span class="pulse-subtitle">REAL-TIME GLOBAL TELEGRAPH FROM THE TERMINAL</span>
+                    </div>
+                    <div class="pulse-indicator">
+                        <span class="pulse-dot"></span>
+                        LIVE WIRE
+                    </div>
+                </div>
+                <div class="pulse-grid" id="pulseContainer">
+                    <!-- Data injected via JS -->
+                    <p class="news-loading"><em>Interpreting global signals...</em></p>
+                </div>
+            </section>
+
+            <!-- Main Display Controls -->
+            <section class="controls">
+                <div class="search-wrap">
+                    <input type="text" id="searchInput" placeholder="Search by Ticker...">
+                </div>
+                <div class="filter-wrap">
+                    <button class="filter-btn active" data-filter="ALL">All Listings</button>
+                    <button class="filter-btn filter-buy-btn" data-filter="BUY">Buys</button>
+                    <button class="filter-btn filter-hold-btn" data-filter="HOLD">Holds</button>
+                    <button class="filter-btn filter-sell-btn" data-filter="SELL">Sells</button>
+                </div>
+                <div class="mode-toggle-wrap">
+                    <span class="mode-label">PREDICTION MODE:</span>
+                    <div class="mode-switch">
+                        <button class="mode-btn active" id="modeDaily" data-mode="daily">DAILY</button>
+                        <button class="mode-btn" id="modeIntraday" data-mode="intraday">INTRADAY</button>
+                    </div>
+                </div>
+            </section>
+
+            <div class="layout-grid">
+                <!-- Main Grid: Recommendation Cards -->
+                <section class="grid-container" id="recommendationGrid">
+                    <div class="loading-state">
+                        <p><em>Gathering the latest intelligence...</em></p>
+                    </div>
+                </section>
+            </div>
+        </section>
+        
+        <!-- Risk Monitoring Section -->
+        <section id="riskMonitorSection" class="dashboard-section" style="display: none;">
+            <div class="section-title-wrap">
+                <h2 class="section-title">Institutional Risk Monitor</h2>
+                <p class="section-subtitle">Real-time exposure and guardrail status</p>
+            </div>
+            <div class="risk-dashboard">
+                <div class="risk-gauge">
+                    <span class="label">Gross Exposure</span>
+                    <div class="gauge-container"><div id="grossExpBar" class="gauge-fill" style="width: 0%"></div></div>
+                    <span id="grossExpVal" class="val">0.0%</span>
+                </div>
+                <div class="risk-gauge">
+                    <span class="label">Net Exposure</span>
+                    <div class="gauge-container"><div id="netExpBar" class="gauge-fill" style="width: 0%"></div></div>
+                    <span id="netExpVal" class="val">0.0%</span>
+                </div>
+            </div>
+            <div class="risk-alerts" id="riskAlerts">
+                <div class="risk-alert alert-success">All Guardrails Active (ADV, Sector Caps, SL/TP)</div>
+            </div>
+        </section>
+
+        <!-- Trading Alpha Section -->
+        <section id="tradingAlphaSection" class="dashboard-section" style="display: none;">
+            <div class="section-title-wrap">
+                <h2 class="section-title">Experimental Long-Short Signals</h2>
+                <p class="section-subtitle">Research ranking from a strategy that has not passed paper trading validation</p>
+            </div>
+            <div class="stats-bar" id="alphaStats">
+                <div class="stat-item">Regime: <span id="marketRegime" class="stat-val">BULL</span></div>
+                <div class="stat-item">Target Capital: <span class="stat-val">₹10,00,000</span></div>
+            </div>
+            <div class="cards-grid" id="alphaSignalsGrid">
+                <!-- Alpha cards will be injected here -->
+            </div>
+        </section>
+
+        <!-- Paper Trading Section -->
+        <section id="validationSection" class="dashboard-section" style="display: none;">
+            <div class="section-title-wrap">
+                <h2 class="section-title">Your Paper Portfolio</h2>
+                <p class="section-subtitle">Virtual cash and long-only NSE trades at the latest available close, with 0.12% modeled execution friction. No Kite order is placed.</p>
+            </div>
+            <form id="paperOrderForm" class="portfolio-input-row">
+                <div class="input-mini-group"><label for="paperTicker">NSE TICKER</label><input id="paperTicker" name="ticker" type="text" maxlength="20" placeholder="INFY" required></div>
+                <div class="input-mini-group"><label for="paperSide">SIDE</label><select id="paperSide" name="side"><option value="BUY">Buy</option><option value="SELL">Sell</option></select></div>
+                <div class="input-mini-group"><label for="paperQuantity">QUANTITY</label><input id="paperQuantity" name="quantity" type="number" min="1" step="1" value="1" required></div>
+                <button class="premium-btn" type="submit">Place paper order</button>
+            </form>
+            <div class="broker-actions" style="display:flex; align-items:center; gap:16px; margin:14px 0 20px; flex-wrap:wrap;">
+                <label for="paperBotEnabled"><input id="paperBotEnabled" type="checkbox"> Run my paper bot after each daily market refresh</label>
+                <button id="runPaperBot" class="premium-btn secondary" type="button">Run paper bot now</button>
+            </div>
+            <p id="paperOrderStatus" role="status"></p>
+            <div class="stats-bar">
+                <div class="stat-item">Starting Capital: <span id="startingCapital" class="stat-val">₹10,00,000</span></div>
+                <div class="stat-item">Paper Equity: <span id="paperEquity" class="stat-val">₹10,00,000</span></div>
+                <div class="stat-item">Cash Balance: <span id="paperCash" class="stat-val">₹10,00,000</span></div>
+                <div class="stat-item">Total P&L: <span id="paperTotalPL" class="stat-val">0.00%</span></div>
+            </div>
+
+            <h3 class="sub-headline" style="margin-top: 20px;">Your open paper positions</h3>
+            <div class="stock-table-container" style="margin-bottom: 30px;">
+                <table class="stock-table" id="paperPositionsTable">
+                    <thead>
+                        <tr>
+                            <th>TICKER</th>
+                            <th>SIDE</th>
+                            <th>QTY</th>
+                            <th>ENTRY PRICE</th>
+                            <th>CURRENT VALUE</th>
+                            <th>P&L (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paperPositionsBody"></tbody>
+                </table>
+            </div>
+
+            <h3 class="sub-headline">Your recent paper trades</h3>
+            <div class="stock-table-container">
+                <table class="stock-table" id="paperTradesTable">
+                    <thead>
+                        <tr>
+                            <th>TIMESTAMP</th>
+                            <th>TICKER</th>
+                            <th>TYPE</th>
+                            <th>PRICE</th>
+                            <th>QUANTITY</th>
+                            <th>REALIZED P&amp;L</th>
+                            <th>SOURCE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paperTradesBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Mini Page Modal Overlay -->
+    <div class="stock-modal" id="stockModal" style="display: none;">
+        <div class="stock-modal-content">
+            <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close modal">&times;</button>
+            <div class="modal-body" id="detailPanel">
+                <div class="modal-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; padding-right: 70px;">
+                    <div style="display: flex; align-items: baseline; gap: 12px;">
+                        <h2 class="sub-headline" id="detailTicker" style="margin-bottom: 0;">TICKER INC.</h2>
+                        <span class="classic-badge" id="detailBadge">HOLD</span>
+                    </div>
+                    <button id="addToPortfolioBtn" class="portfolio-add-btn">
+                        <svg viewBox="0 0 24 24" class="icon" style="margin-right: 6px;"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        Add to Portfolio
+                    </button>
+                </div>
+
+                <div class="live-sentiment-row" style="margin-bottom: 16px;">
+                    <span class="live-sentiment-label">Sentiment:</span>
+                    <span class="live-sentiment-badge" id="detailSentimentBadge">--</span>
+                    <div class="live-sentiment-bar-wrap">
+                        <div class="live-sentiment-bar" id="detailSentimentBar"></div>
+                    </div>
+                    <span class="live-sentiment-score" id="detailSentimentScore"></span>
+                </div>
+
+                <div class="portfolio-input-row" style="margin-bottom: 16px; display: none;" id="portfolioInputs">
+                    <div class="input-mini-group">
+                        <label>QUANTITY</label>
+                        <input type="number" id="portfolioQty" value="1" min="0.01" step="0.01">
+                    </div>
+                    <div class="input-mini-group">
+                        <label>PURCHASE PRICE (₹)</label>
+                        <input type="number" id="portfolioPrice" value="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="article-divider"></div>
+
+                <div class="price-container">
+                    <div class="price-block">
+                        <p class="price-label">Current price</p>
+                        <h3 class="price-val" id="detailCurrent">₹--</h3>
+                    </div>
+                </div>
+
+                <div class="chart-wrapper" id="chartWrapper">
+                    <button id="expandChartBtn" class="expand-btn" aria-label="Expand Chart">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2"
+                            fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <polyline points="9 21 3 21 3 15"></polyline>
+                            <line x1="21" y1="3" x2="14" y2="10"></line>
+                            <line x1="3" y1="21" x2="10" y2="14"></line>
+                        </svg>
+                    </button>
+                    <!-- Chart Loading Spinner -->
+                    <div id="chartLoadingOverlay" class="chart-loading-overlay">
+                        <div class="vintage-spinner"></div>
+                        <p><em>Gathering Market Intelligence...</em></p>
+                    </div>
+                    <canvas id="stockChart"></canvas>
+                </div>
+
+                <p class="chart-disclaimer"><em>Note: Chart indicates actual historical close prices and model projected
+                        values (T+1).</em></p>
+
+                <div class="article-divider" style="margin-top: 24px;"></div>
+
+                <!-- Financial News Section -->
+                <div class="news-section">
+                    <h3 class="news-module-title">Latest Terminal Wire</h3>
+                    <div id="newsContainer" class="news-container">
+                        <p class="news-loading"><em>Scanning for recent developments...</em></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="newspaper-footer">
+        <div class="article-divider"></div>
+        <div class="footer-content">
+            <div class="footer-left">
+                <h2 class="footer-logo">WEALTH sense</h2>
+                <p class="footer-motto">Portfolio Intelligence. Thoughtfully Managed.</p>
+            </div>
+            <div class="footer-right">
+                <div class="headline-meta">
+                    <span id="currentDateFooter">-- --, ----</span>
+                    <span class="meta-divider">|</span>
+                    <span class="edition">PORTFOLIO EDITION</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 WEALTH sense. All rights reserved.</p>
+            <p class="disclaimer-text">Experimental directional signals. The model has not demonstrated reliable out-of-sample accuracy; no price target or live order is provided.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>
