@@ -97,7 +97,7 @@ function updateSummary(summary) {
 }
 
 async function removeFromPortfolio(ticker) {
-    if (!confirm(`Remove ${ticker} from your manual tracker? This does not place a broker order.`)) return;
+    if (!confirm(`Remove ${ticker} from your portfolio tracker?`)) return;
 
     try {
         const response = await fetch(`/api/portfolio/remove/${encodeURIComponent(ticker)}`, {

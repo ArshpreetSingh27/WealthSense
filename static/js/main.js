@@ -312,7 +312,7 @@ async function runPaperBotNow(event) {
         if (!response.ok) throw new Error(data.error || 'Paper bot failed.');
         await fetchPaperTrading();
         status.textContent = data.skipped ? 'Enable the paper bot first.' :
-            `Paper bot on ${data.market_date}: ${data.buys} virtual buys, ${data.sells} virtual sells. No Kite order was sent.`;
+            `Paper bot on ${data.market_date}: ${data.buys} virtual buys, ${data.sells} virtual sells.`;
     } catch (error) {
         status.textContent = error.message;
     } finally {
@@ -342,7 +342,7 @@ async function placePaperOrder(event) {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Paper order failed.');
         await fetchPaperTrading();
-        status.textContent = `${data.trade.side} ${data.trade.quantity} ${data.trade.ticker} filled in your paper account. No broker order was sent.`;
+        status.textContent = `${data.trade.side} ${data.trade.quantity} ${data.trade.ticker} filled in your paper account.`;
     } catch (error) {
         status.textContent = error.message;
     } finally {

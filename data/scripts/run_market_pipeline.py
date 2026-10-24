@@ -15,7 +15,7 @@ def main():
     sys.path.insert(0, BASE_DIR)
     from paper_bot import run_all_enabled
     results = run_all_enabled()
-    print(f"Market research refreshed; {len(results)} opted-in paper bots processed. No broker orders were sent.")
+    print(f"Market research refreshed; {len(results)} opted-in paper bots processed.")
 
 
 if __name__ == "__main__":

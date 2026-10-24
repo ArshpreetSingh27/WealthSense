@@ -7,16 +7,6 @@
 }
 
 [hidden] { display: none !important; }
-.broker-actions { display: flex; gap: 10px; }
-.broker-status { font-size: 13px; color: var(--text-secondary); margin-top: 12px; }
-.broker-section { margin: 36px 0; }
-.broker-section h2 { font-family: 'Playfair Display', serif; margin-bottom: 14px; }
-.broker-table-wrap { overflow-x: auto; border: 1px solid var(--border-color); }
-.broker-table { width: 100%; border-collapse: collapse; background: var(--bg-surface); white-space: nowrap; }
-.broker-table th, .broker-table td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); text-align: left; }
-.broker-table th { font-size: 11px; text-transform: uppercase; color: var(--text-secondary); }
-.broker-table .numeric { text-align: right; }
-.broker-table .empty-cell { text-align: center; color: var(--text-secondary); }
 .section-total { font: 600 14px Inter, sans-serif; margin-left: 12px; }
 @media (max-width: 760px) {
     .premium-nav, .wealth-header { flex-wrap: wrap; gap: 16px; }

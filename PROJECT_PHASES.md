@@ -1,19 +1,18 @@
-# Project phases — paper trading and read-only Kite sync
+# Project phases — paper trading and portfolio management
 
-The product is a multi-user paper trading and portfolio management application. Each user has a separate virtual trading account. A connected Zerodha account supplies read-only holdings, positions, funds, and order history. The app does not place broker orders, and live trading is outside this project.
+The product is a multi-user paper trading and portfolio management application. Each user has a separate virtual trading account and may track manually entered holdings. The app does not connect to a broker or place real orders.
 
 ## Phase 1 — Account and data safety
 
-- [x] Per-user login, encrypted Kite tokens, callback state checks, and authenticated API mutations.
+- [x] Per-user login, isolated portfolio data, and authenticated API mutations.
 - [x] Reject stale market data, fix renamed symbols and training label leakage, and remove fabricated price targets.
 - [x] Keep account API responses uncached and prevent untrusted headline markup from running in the page.
 - [ ] Before public deployment: persistent application secret, HTTPS, database backups and migrations, concurrency tests, and source control.
 
-## Phase 2 — Kite portfolio sync
+## Phase 2 — Manual portfolio tracking
 
-- [x] Per-user read-only connect, holdings, positions, funds, orders, refresh, reconnect, and disconnect.
-- [ ] Verify two real Kite accounts with approved app credentials; reconcile balances and corporate actions against Kite.
-- [ ] Add bounded retries, provider rate control, monitoring, and dated broker snapshots if required.
+- [x] Per-user manually entered holdings with latest available valuations and estimated P&L.
+- [ ] Add portfolio performance history and clearer handling of splits, dividends, and unavailable prices.
 
 ## Phase 3 — Per-user paper trading
 
@@ -29,4 +28,4 @@ The product is a multi-user paper trading and portfolio management application. 
 - [ ] Set documented acceptance criteria before representing a strategy as reliable. A September 2026 holdout check of the current daily classifier was about 49.7% accurate.
 - [ ] Deploy the paper-only website with production security and confirm recurring jobs on the host.
 
-No live Kite order endpoint or broker order worker is part of the planned system.
+No broker connection or real order worker is part of the planned system.

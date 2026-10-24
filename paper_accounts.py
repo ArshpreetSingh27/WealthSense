@@ -1,4 +1,4 @@
-"""Isolated, long-only virtual trading accounts. No broker order calls."""
+"""Isolated, long-only virtual trading accounts."""
 
 import math
 import sqlite3

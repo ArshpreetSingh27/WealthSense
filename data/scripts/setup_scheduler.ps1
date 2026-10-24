@@ -9,7 +9,7 @@ $Action = New-ScheduledTaskAction -Execute $Python -Argument ('"' + $Script + '"
 $Trigger = New-ScheduledTaskTrigger -Daily -At 4:00PM
 $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 2)
 
-Register-ScheduledTask -Action $Action -Trigger $Trigger -Settings $Settings -TaskName "MarketDataPipeline" -Description "Daily market research refresh and opted-in paper bots; no broker orders" -Force | Out-Null
+Register-ScheduledTask -Action $Action -Trigger $Trigger -Settings $Settings -TaskName "MarketDataPipeline" -Description "Daily market research refresh and opted-in paper bots" -Force | Out-Null
 $OldTask = Get-ScheduledTask -TaskName "ShadowTradingPipeline" -ErrorAction SilentlyContinue
 if ($OldTask) {
     Disable-ScheduledTask -TaskName "ShadowTradingPipeline" | Out-Null

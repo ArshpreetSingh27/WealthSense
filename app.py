@@ -27,8 +27,6 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("APP_HTTPS") == "1",
 )
-from kite_routes import kite_bp
-app.register_blueprint(kite_bp)
 print("Initializing configuration...")
 
 @app.before_request
@@ -105,13 +103,13 @@ def dashboard():
 def portfolio():
     if "user" not in session:
         return redirect(url_for("login_page"))
-    return render_template("kite_portfolio.html")
+    return render_template("portfolio.html")
 
 @app.route("/portfolio/manual")
 def manual_portfolio():
     if "user" not in session:
         return redirect(url_for("login_page"))
-    return render_template("portfolio.html")
+    return redirect(url_for("portfolio"))
 
 
 # ================================

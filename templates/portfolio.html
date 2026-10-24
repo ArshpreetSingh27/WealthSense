@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual Portfolio | WEALTH sense</title>
+    <title>Your Portfolio | WEALTH sense</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/portfolio.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -13,8 +13,7 @@
         <div class="nav-brand">WEALTH <span class="highlight">sense</span></div>
         <div class="nav-links">
             <a href="/" class="nav-link">Market Dashboard</a>
-            <a href="/portfolio" class="nav-link">Kite Portfolio</a>
-            <a href="/portfolio/manual" class="nav-link active">Manual Tracker</a>
+            <a href="/portfolio" class="nav-link active">Portfolio</a>
             <a href="/logout" class="nav-link logout">Exit System</a>
         </div>
     </nav>
@@ -22,8 +21,8 @@
     <main class="portfolio-container">
         <header class="wealth-header">
             <div class="header-left">
-                <h1>Manual <span class="italic">Tracker</span></h1>
-                <p class="subtitle">Holdings entered in this app. These are separate from your Kite account.</p>
+                <h1>Your <span class="italic">Portfolio</span></h1>
+                <p class="subtitle">Track your holdings here. Your paper trading account is separate.</p>
             </div>
             <div class="header-right">
                 <button id="refreshPortfolio" class="premium-btn secondary pulse-hover" title="Sync with Market">

@@ -1,6 +1,6 @@
 # WEALTH sense - Portfolio Intelligence
 
-WEALTH sense is a multi-user paper trading and portfolio application for NSE India markets. Each user has a separate virtual account and may opt in to a daily paper bot. Kite is used only to show that user's read-only Zerodha portfolio. The current research model is experimental.
+WEALTH sense is a multi-user paper trading and portfolio application for NSE India markets. Each user has a separate virtual account and may opt in to a daily paper bot. Users can also track manually entered holdings. The current research model is experimental.
 
 See [PROJECT_PHASES.md](PROJECT_PHASES.md) for the implementation phases and release gates.
 
@@ -18,13 +18,10 @@ Shows the latest available global index quotes including NIFTY 50, SENSEX, S&P 5
 Calculates real-time sentiment scores from Google News RSS headlines using VADER sentiment analysis with a custom financial lexicon.
 
 **Wealth Portfolio Tracker**
-Tracks manually entered holdings with latest available prices and estimated P&L. It is separate from the Kite portfolio and the paper account.
-
-**Kite Portfolio (read-only integration)**
-Each website user can connect or disconnect their own Zerodha account. The `/portfolio` page reads that user's Kite holdings, open positions, funds, and recent orders. The original manually entered tracker is at `/portfolio/manual` and is kept separate from broker data. Broker orders are not placed by this integration.
+Tracks manually entered holdings with latest available prices and estimated P&L at `/portfolio`. It is separate from the paper account.
 
 **Per-user paper trading**
-The Paper Trading tab gives each user ₹10,00,000 in virtual starting cash. Manual paper buys and sells use the latest available NSE close and modeled 0.12% execution friction. A user can enable a daily long-only paper bot or run it manually. Virtual trades are stored per user in SQLite and never sent to Kite.
+The Paper Trading tab gives each user ₹10,00,000 in virtual starting cash. Manual paper buys and sells use the latest available NSE close and modeled 0.12% execution friction. A user can enable a daily long-only paper bot or run it manually. Virtual trades are stored per user in SQLite and are never sent to a broker.
 
 **Paper trading limits**
 Virtual orders require available cash, cannot short stocks, and cap a single paper position at 20% of starting capital. Users can pause their paper bot.
@@ -98,8 +95,6 @@ WealthSense/
 |-- database.py                    # SQLite models, auth logic, user management
 |-- paper_accounts.py              # Per-user virtual cash, positions, and fills
 |-- paper_bot.py                   # Opt-in daily virtual trading logic
-|-- kite_integration.py            # Read-only Kite API client
-|-- kite_routes.py                 # Per-user Kite connect and sync routes
 |-- realtime.py                    # Live data: yFinance, Google News RSS, Sentiment
 |-- risk_manager.py                # Portfolio risk guardrails and exposure limits
 |-- requirements.txt               # Python dependencies
@@ -155,10 +150,6 @@ You can override default settings using environment variables. Copy `.env.exampl
 FLASK_SECRET_KEY=your_secret_key_here
 APP_HTTPS=1
 POLYGON_API_KEY=your_polygon_api_key_here
-KITE_API_KEY=your_kite_app_key
-KITE_API_SECRET=your_kite_app_secret
-KITE_TOKEN_ENCRYPTION_KEY=your_fernet_key
-KITE_ENV=production
 ```
 
 | Variable | Description |
@@ -166,15 +157,7 @@ KITE_ENV=production
 | FLASK_SECRET_KEY | Secret key used for Flask session storage |
 | APP_HTTPS | Set to `1` when serving through HTTPS to secure session cookies |
 | POLYGON_API_KEY | Optional Polygon.io news key; detailed news is unavailable without it |
-| KITE_API_KEY / KITE_API_SECRET | Server-side Kite Connect app credentials |
-| KITE_TOKEN_ENCRYPTION_KEY | Fernet key used to encrypt each user's Kite access token in SQLite |
-| KITE_ENV | `production` or `sandbox` (defaults to `production`) |
-
-For a local Kite sandbox trial, set `KITE_ENV=sandbox` and use the demo app credentials documented by Kite. Generate a persistent encryption key once with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. Configure the Kite app redirect URL as `https://YOUR_HOST/kite/callback` (or the corresponding local URL for sandbox). Keep the API secret and encryption key on the server; never put them in browser code. Users reconnect after their Kite session expires, normally by 6 AM the next day. The broker page refreshes when opened and every 60 seconds while visible.
-
-The Kite integration reads broker data only. Before a public multi-user launch, arrange the appropriate Kite platform access with Zerodha and complete production security, deployment, and reconciliation.
-
-The signal API rejects recommendations and trading signals whose source market date is more than seven calendar days old. Directional scores are not converted into invented price targets. The scheduled `MarketDataPipeline` refreshes market data and runs only user-enabled paper bots. The legacy shared `ShadowTradingPipeline` task remains disabled; its old file is not used for user accounts. No broker orders are placed.
+The signal API rejects recommendations and trading signals whose source market date is more than seven calendar days old. Directional scores are not converted into invented price targets. The scheduled `MarketDataPipeline` refreshes market data and runs only user-enabled paper bots. The legacy shared `ShadowTradingPipeline` task remains disabled; its old file is not used for user accounts. No real orders are placed.
 
 ---
 

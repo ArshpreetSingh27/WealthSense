@@ -40,16 +40,7 @@ def init_db():
     user_columns = {row[1] for row in cursor.fetchall()}
     if "is_admin" not in user_columns:
         cursor.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS broker_connections (
-            user_email TEXT PRIMARY KEY,
-            broker TEXT NOT NULL CHECK (broker = 'kite'),
-            broker_user_id TEXT NOT NULL UNIQUE,
-            access_token_encrypted BLOB NOT NULL,
-            connected_at TEXT NOT NULL,
-            FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
-        )
-    ''')
+    cursor.execute("DROP TABLE IF EXISTS broker_connections")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS paper_accounts (
             user_email TEXT PRIMARY KEY,
@@ -211,34 +202,6 @@ def get_user_portfolio(email):
         })
     return portfolio
 
-def save_kite_connection(email, broker_user_id, encrypted_token, connected_at):
-    with closing(sqlite3.connect(DB_FILE)) as conn:
-        with conn:
-            conn.execute('''
-                INSERT INTO broker_connections
-                    (user_email, broker, broker_user_id, access_token_encrypted, connected_at)
-                VALUES (?, 'kite', ?, ?, ?)
-                ON CONFLICT(user_email) DO UPDATE SET
-                    broker_user_id = excluded.broker_user_id,
-                    access_token_encrypted = excluded.access_token_encrypted,
-                    connected_at = excluded.connected_at
-            ''', (email.lower().strip(), broker_user_id, encrypted_token, connected_at))
-
-def get_kite_connection(email):
-    with closing(sqlite3.connect(DB_FILE)) as conn:
-        row = conn.execute('''
-            SELECT broker_user_id, access_token_encrypted, connected_at
-            FROM broker_connections WHERE user_email = ? AND broker = 'kite'
-        ''', (email.lower().strip(),)).fetchone()
-    if row is None:
-        return None
-    return {"broker_user_id": row[0], "access_token_encrypted": row[1], "connected_at": row[2]}
-
-def delete_kite_connection(email):
-    with closing(sqlite3.connect(DB_FILE)) as conn:
-        with conn:
-            conn.execute("DELETE FROM broker_connections WHERE user_email=? AND broker='kite'", (email.lower().strip(),))
-
 def get_all_users_summary():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -271,7 +234,6 @@ def delete_user_account(email):
         cursor.execute("DELETE FROM paper_trades WHERE user_email=?", (email,))
         cursor.execute("DELETE FROM paper_positions WHERE user_email=?", (email,))
         cursor.execute("DELETE FROM paper_accounts WHERE user_email=?", (email,))
-        cursor.execute("DELETE FROM broker_connections WHERE user_email=?", (email,))
         # 1. Delete portfolio items
         cursor.execute("DELETE FROM portfolio WHERE user_email=?", (email,))
         # 2. Delete user account

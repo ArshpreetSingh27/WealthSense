@@ -186,7 +186,7 @@
         <section id="validationSection" class="dashboard-section" style="display: none;">
             <div class="section-title-wrap">
                 <h2 class="section-title">Your Paper Portfolio</h2>
-                <p class="section-subtitle">Virtual cash and long-only NSE trades at the latest available close, with 0.12% modeled execution friction. No Kite order is placed.</p>
+                <p class="section-subtitle">Virtual cash and long-only NSE trades at the latest available close, with 0.12% modeled execution friction. No real orders are placed.</p>
             </div>
             <form id="paperOrderForm" class="portfolio-input-row">
                 <div class="input-mini-group"><label for="paperTicker">NSE TICKER</label><input id="paperTicker" name="ticker" type="text" maxlength="20" placeholder="INFY" required></div>
@@ -194,7 +194,7 @@
                 <div class="input-mini-group"><label for="paperQuantity">QUANTITY</label><input id="paperQuantity" name="quantity" type="number" min="1" step="1" value="1" required></div>
                 <button class="premium-btn" type="submit">Place paper order</button>
             </form>
-            <div class="broker-actions" style="display:flex; align-items:center; gap:16px; margin:14px 0 20px; flex-wrap:wrap;">
+            <div class="paper-actions" style="display:flex; align-items:center; gap:16px; margin:14px 0 20px; flex-wrap:wrap;">
                 <label for="paperBotEnabled"><input id="paperBotEnabled" type="checkbox"> Run my paper bot after each daily market refresh</label>
                 <button id="runPaperBot" class="premium-btn secondary" type="button">Run paper bot now</button>
             </div>

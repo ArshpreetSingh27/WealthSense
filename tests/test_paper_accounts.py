@@ -38,8 +38,7 @@ class MultiUserPaperTests(unittest.TestCase):
         })
 
     def test_user_balances_positions_and_orders_are_isolated(self):
-        with patch("app.paper_quote", return_value=(100.0, "2026-10-01")), \
-                patch("kite_integration._request") as broker_request:
+        with patch("app.paper_quote", return_value=(100.0, "2026-10-01")):
             order_id = str(uuid.uuid4())
             buy = self._order(self.alice, "BUY", 10, order_id)
             self.assertEqual(buy.status_code, 201)
@@ -58,7 +57,6 @@ class MultiUserPaperTests(unittest.TestCase):
             sell = self._order(self.alice, "SELL", 5)
             self.assertEqual(sell.status_code, 201)
             self.assertEqual(self.alice.get("/api/paper-trading").json["positions"][0]["quantity"], 5)
-            broker_request.assert_not_called()
 
     def test_risk_limits_and_quote_failure_do_not_create_trades(self):
         with patch("app.paper_quote", return_value=(100.0, "2026-10-01")):
@@ -90,15 +88,13 @@ class MultiUserPaperTests(unittest.TestCase):
         ])
         with patch("paper_bot._recommendations", return_value=recommendations), \
                 patch("paper_bot._quote", return_value=100.0), \
-                patch("app.paper_quote", return_value=(100.0, "2026-10-01")), \
-                patch("kite_integration._request") as broker_request:
+                patch("app.paper_quote", return_value=(100.0, "2026-10-01")):
             first = self.alice.post("/api/paper-trading/bot/run")
             second = self.alice.post("/api/paper-trading/bot/run")
             self.assertEqual(first.json["buys"], 3)
             self.assertEqual(second.json["buys"], 0)
             self.assertEqual(len(self.alice.get("/api/paper-trading").json["trades"]), 3)
             self.assertEqual(self.bob.get("/api/paper-trading").json["trades"], [])
-            broker_request.assert_not_called()
 
     def test_bot_is_off_by_default_and_dashboard_is_available_to_regular_user(self):
         page = self.alice.get("/")
