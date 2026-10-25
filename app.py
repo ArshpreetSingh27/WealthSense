@@ -59,7 +59,6 @@ def prevent_account_data_caching(response):
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LATEST_DATA_FILE = os.path.join(BASE_DIR, "data", "processed", "latest_recommendations.json")
-LATEST_INTRADAY_DATA_FILE = os.path.join(BASE_DIR, "data", "processed", "latest_recommendations_intraday.json")
 
 def data_is_stale(value, max_age_days=7):
     try:
@@ -285,11 +284,12 @@ def admin_delete_user():
 
 @app.route("/api/recommendations", methods=["GET"])
 def get_recommendations():
-    mode = request.args.get("mode", "daily")
-    data_file = LATEST_INTRADAY_DATA_FILE if mode == "intraday" else LATEST_DATA_FILE
+    if request.args.get("mode", "daily") != "daily":
+        return jsonify({"error": "Only daily recommendations are available."}), 400
+    data_file = LATEST_DATA_FILE
     
     if not os.path.exists(data_file):
-        return jsonify({"error": f"No {mode} recommendation data available."}), 404
+        return jsonify({"error": "No daily recommendation data available."}), 404
         
     try:
         df = pd.read_json(data_file)
@@ -314,8 +314,9 @@ def get_trading_alpha():
 
 @app.route("/api/summary", methods=["GET"])
 def get_summary():
-    mode = request.args.get("mode", "daily")
-    data_file = LATEST_INTRADAY_DATA_FILE if mode == "intraday" else LATEST_DATA_FILE
+    if request.args.get("mode", "daily") != "daily":
+        return jsonify({"error": "Only daily recommendations are available."}), 400
+    data_file = LATEST_DATA_FILE
     
     if not os.path.exists(data_file):
         return jsonify({"error": "No data."}), 404
@@ -461,12 +462,11 @@ def get_stock_history(ticker):
     """
     Returns historical close prices for the chart.
     """
-    mode = request.args.get("mode", "daily")
-    interval = "5m" if mode == "intraday" else "1d"
-    period = "5d" if mode == "intraday" else "35d"
+    if request.args.get("mode", "daily") != "daily":
+        return jsonify({"error": "Only daily history is available."}), 400
     try:
         # Get data from realtime module
-        price_data = get_live_price(ticker, period=period, interval=interval)
+        price_data = get_live_price(ticker, period="35d", interval="1d")
         dates = price_data["dates"]
         prices = price_data["prices"]
         current_value = price_data["current_price"]
@@ -515,14 +515,13 @@ def get_live_data(ticker):
     """
     Combined real-time endpoint.
     """
-    mode = request.args.get("mode", "daily")
-    interval = "5m" if mode == "intraday" else "1d"
-    period = "5d" if mode == "intraday" else "35d"
-    data_file = LATEST_INTRADAY_DATA_FILE if mode == "intraday" else LATEST_DATA_FILE
+    if request.args.get("mode", "daily") != "daily":
+        return jsonify({"error": "Only daily data is available."}), 400
+    data_file = LATEST_DATA_FILE
 
     try:
         # 1. Live price & history
-        price_data = get_live_price(ticker, period=period, interval=interval)
+        price_data = get_live_price(ticker, period="35d", interval="1d")
         current_price = price_data["current_price"]
 
         # 2. Match with model recommendations

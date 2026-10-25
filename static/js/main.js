@@ -1,6 +1,5 @@
 const API_URL = "/api";
 let currentData = [];
-let currentMode = "daily";
 let activeTab = 'recommendations';
 let stockChartInstance = null;
 let currentChartDetails = null;
@@ -106,28 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
         setInterval(fetchSummary, 60000);
         setInterval(fetchIndices, 60000);
 
-        // Mode Toggle Handler
-        const modeDaily = document.getElementById('modeDaily');
-        const modeIntraday = document.getElementById('modeIntraday');
-
-        if (modeDaily && modeIntraday) {
-            const handleModeChange = (mode) => {
-                if (currentMode === mode) return;
-                currentMode = mode;
-                
-                // Update UI
-                modeDaily.classList.toggle('active', mode === 'daily');
-                modeIntraday.classList.toggle('active', mode === 'intraday');
-
-                // Refresh Data
-                fetchSummary();
-                fetchRecommendations();
-
-            };
-
-            modeDaily.addEventListener('click', () => handleModeChange('daily'));
-            modeIntraday.addEventListener('click', () => handleModeChange('intraday'));
-        }
     }
 
     // Add to Portfolio Handler
@@ -216,7 +193,7 @@ function switchTab(tab) {
     const riskSec = document.getElementById('riskMonitorSection');
     const valSec = document.getElementById('validationSection');
 
-    if (recSec) recSec.style.display = (tab === 'recommendations' || tab === 'intraday') ? 'block' : 'none';
+    if (recSec) recSec.style.display = (tab === 'recommendations') ? 'block' : 'none';
     if (alphaSec) alphaSec.style.display = (tab === 'trading-alpha') ? 'block' : 'none';
     if (riskSec) riskSec.style.display = (tab === 'risk-monitor') ? 'block' : 'none';
     if (valSec) valSec.style.display = (tab === 'validation') ? 'block' : 'none';
@@ -226,7 +203,6 @@ function switchTab(tab) {
     } else if (tab === 'validation') {
         fetchPaperTrading();
     } else {
-        currentMode = (tab === 'intraday') ? 'intraday' : 'daily';
         refreshDashboard();
     }
 }
@@ -413,7 +389,7 @@ function renderAlphaCards(signals) {
 // Fetch summary stats
 async function fetchSummary() {
     try {
-        const response = await fetch(`${API_URL}/summary?mode=${currentMode}`);
+        const response = await fetch(`${API_URL}/summary`);
         if (!response.ok) throw new Error("Failed to load summary");
 
         const data = await response.json();
@@ -462,7 +438,7 @@ async function fetchRecommendations() {
     showSkeletons();
 
     try {
-        const response = await fetch(`${API_URL}/recommendations?mode=${currentMode}`);
+        const response = await fetch(`${API_URL}/recommendations`);
         if (!response.ok) throw new Error("Failed to load recommendations");
 
         currentData = await response.json();
@@ -570,7 +546,7 @@ async function loadStockDetail(ticker, alias = null) {
     const signal = currentFetchAbortController.signal;
 
     try {
-        const res = await fetch(`${API_URL}/live/${encodeURIComponent(ticker)}?mode=${currentMode}`, { signal });
+        const res = await fetch(`${API_URL}/live/${encodeURIComponent(ticker)}`, { signal });
         if (!res.ok) throw new Error("Failed to fetch live history");
         const data = await res.json();
 
