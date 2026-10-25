@@ -66,8 +66,3 @@ if __name__ == "__main__":
                       'Volatility', 'BB_Position', 'Volume_Ratio', 'Volume_Change', 'High_Low_Range',
                       'SMA_Cross', 'Price_Lag_1', 'RSI_Lag_1', '52W_Pos', 'ATR_Ratio']
     calculate_accuracy(daily_csv, 'Date', 'Target', daily_features, "Daily Prediction (T+1)")
-
-    # Intraday Accuracy
-    intraday_csv = os.path.join(BASE_DIR, "data", "processed", "intraday_features.csv")
-    intraday_features = ['RSI', 'Volatility', 'SMA_20_Ratio', 'Volume_Ratio']
-    calculate_accuracy(intraday_csv, 'Datetime', 'Target', intraday_features, "Intraday Prediction (H+1)")

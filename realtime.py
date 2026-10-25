@@ -53,7 +53,7 @@ _analyzer.lexicon.update(FINANCIAL_LEXICON)
 # 1. LIVE PRICE & HISTORY (yfinance)
 # ─────────────────────────────────────────
 
-def get_live_price(ticker: str, period: str = "35d", interval: str = "1d") -> dict:
+def get_live_price(ticker: str, period: str = "35d") -> dict:
     """
     Fetches current price + historical close history for `ticker`.
     Unqualified tickers are NSE symbols (e.g. 'RELIANCE' becomes 'RELIANCE.NS').
@@ -69,16 +69,13 @@ def get_live_price(ticker: str, period: str = "35d", interval: str = "1d") -> di
     if not ticker.startswith("^") and not ticker.endswith((".NS", ".BO", ".BSE")):
         ticker = f"{ticker}.NS"
     stock = yf.Ticker(ticker)
-    hist = stock.history(period=period, interval=interval)
+    hist = stock.history(period=period, interval="1d")
 
     if hist.empty:
         raise ValueError(f"No data found for ticker '{ticker}'. Check the symbol.")
 
     hist = hist.tail(30)
-    if interval == "1d":
-        dates = hist.index.strftime("%Y-%m-%d").tolist()
-    else:
-        dates = hist.index.strftime("%H:%M").tolist() # Just show time for intraday
+    dates = hist.index.strftime("%Y-%m-%d").tolist()
     prices = [round(float(p), 2) for p in hist["Close"].tolist()]
     current_price = prices[-1]
 

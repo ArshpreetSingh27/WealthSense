@@ -466,7 +466,7 @@ def get_stock_history(ticker):
         return jsonify({"error": "Only daily history is available."}), 400
     try:
         # Get data from realtime module
-        price_data = get_live_price(ticker, period="35d", interval="1d")
+        price_data = get_live_price(ticker, period="35d")
         dates = price_data["dates"]
         prices = price_data["prices"]
         current_value = price_data["current_price"]
@@ -521,7 +521,7 @@ def get_live_data(ticker):
 
     try:
         # 1. Live price & history
-        price_data = get_live_price(ticker, period="35d", interval="1d")
+        price_data = get_live_price(ticker, period="35d")
         current_price = price_data["current_price"]
 
         # 2. Match with model recommendations

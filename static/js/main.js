@@ -104,7 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // Auto-refresh summary and indices every 60 seconds
         setInterval(fetchSummary, 60000);
         setInterval(fetchIndices, 60000);
-
     }
 
     // Add to Portfolio Handler

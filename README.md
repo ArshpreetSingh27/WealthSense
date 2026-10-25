@@ -135,7 +135,6 @@ WealthSense/
     |-- portfolio_schema.json
     |-- processed/
     |   |-- latest_recommendations.json
-    |   `-- latest_recommendations_intraday.json
     |-- models/
     |   |-- lgb_event.pkl
     |   |-- lgb_midcap.pkl
@@ -147,7 +146,6 @@ WealthSense/
         |-- run_market_pipeline.py # Scheduled refresh and opted-in paper bots
         |-- update_pipeline.py     # Daily market-data and recommendation refresh
         |-- train_model.py         # Daily model training
-        |-- train_intraday_model.py
         |-- train_event_ensemble.py
         |-- backtest.py
         |-- generate_daily_signals.py
